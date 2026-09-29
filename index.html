@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Linking Cube Number Stairs</title>
+<style>
+:root{--ink:#24364d;--muted:#63758b;--red:#e55353;--red-dark:#b52f37;--blue:#4289d1;--blue-dark:#245f9d;--gold:#ffd45f;--paper:#fffefa;--line:#c5d1de}
+*{box-sizing:border-box}
+body{margin:0;color:var(--ink);font-family:"Trebuchet MS",Arial,sans-serif;background:linear-gradient(135deg,#edf5ff,#fff8e8);min-height:100vh}
+.app{max-width:1250px;margin:auto;padding:18px 14px 30px}
+header{text-align:center}h1{font-size:clamp(1.7rem,4vw,2.6rem);margin:0}.sub{margin:6px 0 0;color:var(--muted)}
+.toolbar{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:18px 0 12px}
+button{font:inherit;font-weight:800;border:0;border-radius:12px;padding:10px 14px;background:#fff;color:var(--ink);box-shadow:0 3px 0 #d5dee8;cursor:pointer}
+button:active{transform:translateY(1px);box-shadow:0 1px 0 #d5dee8}
+button:focus-visible{outline:4px solid var(--gold);outline-offset:2px}
+.mode.active{outline:3px solid #548bc8;background:#e7f1ff}
+.mode.less.active{outline-color:#4d9a69;background:#e7f6eb}
+.primary{background:#315f94;color:white}.utility{background:#fff}
+.instructions{text-align:center;color:#53667d;line-height:1.4;margin:12px auto 16px;max-width:850px}
+.panel{background:rgba(255,255,255,.94);border:3px solid #dce6f1;border-radius:22px;padding:14px;box-shadow:0 10px 25px #2c486e12}
+.inventory-wrap{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:15px}
+.inventory{border:2px solid #dce6f1;border-radius:16px;padding:10px 12px;background:#fbfdff;min-width:0}
+.inv-head{display:flex;justify-content:space-between;align-items:center;gap:8px;font-weight:900;margin-bottom:8px}
+.color-name{display:flex;align-items:center;gap:7px}.swatch{width:16px;height:16px;border-radius:4px;box-shadow:inset 0 2px 2px #ffffff8c,inset 0 -3px 2px #0002}
+.red-swatch{background:var(--red)}.blue-swatch{background:var(--blue)}
+.count{font-size:.9rem;color:var(--muted);white-space:nowrap}
+.tray{display:flex;gap:6px;flex-wrap:wrap;min-height:38px;align-items:center}
+.cube{width:31px;height:31px;border-radius:5px;position:relative;cursor:grab;touch-action:manipulation;flex:0 0 auto;border:1px solid #0002;box-shadow:inset 0 3px 2px #ffffff7d,inset 0 -4px 2px #0002,1px 2px 2px #0002;user-select:none}
+.cube:before{content:"";position:absolute;top:3px;left:4px;right:4px;height:5px;border-radius:50%;background:#ffffff45;border:1px solid #00000014}
+.cube:after{content:"";position:absolute;bottom:4px;left:50%;transform:translateX(-50%);width:8px;height:4px;border-radius:50%;background:#00000018;box-shadow:inset 0 1px 1px #0002}
+.cube.red{background:linear-gradient(135deg,#ff7777,var(--red) 60%,var(--red-dark))}
+.cube.blue{background:linear-gradient(135deg,#80c1ff,var(--blue) 60%,var(--blue-dark))}
+.cube.selected{outline:4px solid var(--gold);outline-offset:2px;z-index:5}
+.tray .cube{width:26px;height:26px}
+.board-title{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin:2px 2px 10px}
+.board-title strong{font-size:1.1rem}.board-title span{color:var(--muted);font-size:.9rem}
+.stair-board{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:5px;align-items:end;padding:10px 4px 0;border-bottom:5px solid #9aaec2;min-height:320px}
+.stair-column{min-width:0;display:flex;flex-direction:column-reverse;align-items:center;justify-content:flex-start;gap:2px;position:relative;min-height:30px;padding:3px 1px 5px;border:2px dashed #c6d3e1;border-bottom:0;border-radius:8px 8px 0 0;background:#f6faff;cursor:pointer;box-shadow:none;overflow:visible}
+.stair-column:focus-visible{outline:4px solid var(--gold)}
+.stair-column.active-col{background:#fff8df;border-color:#d3a72f}
+.stair-column.drop-target{background:#e7f7eb;border-color:#319657;border-style:solid}
+.stair-column .cube{width:min(100%,38px);height:clamp(18px,3.3vw,35px);border-radius:5px;cursor:grab}
+.stair-column .cube:before{height:4px;top:2px}
+.stair-column .cube:after{width:7px;height:3px;bottom:3px}
+.stair-column .empty-note{position:absolute;top:5px;left:0;right:0;text-align:center;color:#a9b7c7;font-size:.75rem;pointer-events:none}
+.labels{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:5px;padding:7px 4px 0;text-align:center;font-weight:900}
+.column-count{font-size:.72rem;color:#66788d;font-weight:700;margin-top:3px}
+.controls{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:14px 0 0}
+.status{margin:15px auto 0;padding:12px 15px;border-radius:15px;background:#f2f6fb;border:2px solid #dce6f1;text-align:center;max-width:850px;min-height:70px}
+.big{font-size:clamp(1.15rem,3vw,1.65rem);font-weight:900;margin-bottom:4px}.small{color:#53667d}
+.tip{text-align:center;color:var(--muted);font-size:.9rem;margin:12px 0 0}
+@media(max-width:650px){.app{padding:12px 6px 20px}.panel{padding:8px 5px}.inventory-wrap{gap:6px}.inventory{padding:8px 6px}.tray{gap:4px}.tray .cube{width:20px;height:20px}.stair-board,.labels{gap:2px;padding-left:1px;padding-right:1px}.stair-board{min-height:245px}.stair-column{padding:2px 0 4px;border-width:1px}.stair-column .cube{height:clamp(15px,4.2vw,25px);border-radius:3px}.column-count{font-size:.62rem}button{padding:9px 10px;font-size:.9rem}}
+</style>
+</head>
+<body>
+<div class="app">
+<header><h1>🧱 Linking Cube Number Stairs</h1><p class="sub">Build, stack, move, and count real-looking digital cubes!</p></header>
+<div class="toolbar">
+<button class="mode active" id="buildMode">🧱 Build</button>
+<button class="mode" id="moreMode">＋ 1 More</button>
+<button class="mode less" id="lessMode">− 1 Less</button>
+<button class="utility" id="clearColumn">Clear Selected Stair</button>
+<button class="utility" id="reset">↻ Reset All</button>
+</div>
+<p class="instructions" id="instructions">Drag red or blue cubes from the trays into a stair. You can also click a tray cube, then click a stair. Stack up to 10 cubes in each stair. Drag a cube from one stair to another to move it.</p>
+<div class="panel">
+  <div class="inventory-wrap">
+    <section class="inventory">
+      <div class="inv-head"><span class="color-name"><i class="swatch red-swatch"></i> Red cubes</span><span class="count" id="redCount">25 available</span></div>
+      <div class="tray" id="redTray" aria-label="Red cube tray"></div>
+    </section>
+    <section class="inventory">
+      <div class="inv-head"><span class="color-name"><i class="swatch blue-swatch"></i> Blue cubes</span><span class="count" id="blueCount">30 available</span></div>
+      <div class="tray" id="blueTray" aria-label="Blue cube tray"></div>
+    </section>
+  </div>
+  <div class="board-title"><strong>Number stairs 1–10</strong><span id="totalCount">0 of 55 cubes on the board</span></div>
+  <div class="stair-board" id="board" aria-label="Drop cubes into these stair columns"></div>
+  <div class="labels" id="labels"></div>
+  <div class="controls">
+    <button class="primary" id="addSelected">＋ Add selected cube</button>
+    <button id="removeTop">− Remove top cube</button>
+    <button class="primary" id="completeStair">Build this stair to its number</button>
+  </div>
+  <div class="status" aria-live="polite"><div class="big" id="big">Choose a cube and a stair!</div><div class="small" id="small">The red and blue cube supplies match the lesson: 25 red and 30 blue.</div></div>
+</div>
+<p class="tip">Teacher tip: Use one color for the first set of stairs and the other color for the added cubes, or mix colors to show “one more” and “one less.”</p>
+</div>
+<script>
+const MAX=10;
+const supplies={red:25,blue:30};
+const inventory={red:25,blue:30};
+const stacks=Array.from({length:11},()=>[]);
+let selectedColumn=1, selectedColor='red', selectedInventoryCube=null, mode='build', dragData=null;
+const board=document.getElementById('board'), labels=document.getElementById('labels');
+const big=document.getElementById('big'),small=document.getElementById('small'),instructions=document.getElementById('instructions');
+const cols={};
+function makeCube(color,fromTray=false){
+ const el=document.createElement('div');el.className='cube '+color;el.draggable=true;el.dataset.color=color;el.setAttribute('role','button');el.setAttribute('aria-label',color+' linking cube');
+ el.addEventListener('click',e=>{
+   e.stopPropagation();
+   if(fromTray){selectedColor=color;document.querySelectorAll('.tray .cube').forEach(c=>c.classList.remove('selected'));el.classList.add('selected');selectedInventoryCube=el;updateStatus(`Selected a ${color} cube.`,`Now click a stair or press “Add selected cube.”`);}
+   else {selectedColor=color;moveCubeFromStack(el);}
+ });
+ el.addEventListener('dragstart',e=>{
+   dragData=fromTray?{source:'tray',color}:{source:'stack',color,from:Number(el.dataset.column),id:el.dataset.id};
+   e.dataTransfer.setData('text/plain',JSON.stringify(dragData));e.dataTransfer.effectAllowed='move';
+ });
+ return el;
+}
+function buildTrays(){
+ for(const color of ['red','blue']){
+  const tray=document.getElementById(color+'Tray');tray.innerHTML='';
+  for(let i=0;i<inventory[color];i++){
+   const cube=makeCube(color,true);cube.dataset.trayIndex=i;tray.appendChild(cube);
+  }
+  document.getElementById(color+'Count').textContent=inventory[color]+' available';
+ }
+}
+function renderBoard(){
+ board.innerHTML='';labels.innerHTML='';
+ for(let n=1;n<=10;n++){
+  const col=document.createElement('button');col.className='stair-column'+(selectedColumn===n?' active-col':'');col.dataset.n=n;col.setAttribute('aria-label',`Stair ${n}, ${stacks[n].length} cubes`);
+  col.addEventListener('click',()=>{selectedColumn=n;renderBoard();updateStatus(`Stair ${n} selected.`,`${stacks[n].length} cube${stacks[n].length===1?'':'s'} stacked here. Click a tray cube first, then this stair, or drag cubes directly.`);});
+  col.addEventListener('dragover',e=>{e.preventDefault();col.classList.add('drop-target');e.dataTransfer.dropEffect='move';});
+  col.addEventListener('dragleave',()=>col.classList.remove('drop-target'));
+  col.addEventListener('drop',e=>{
+   e.preventDefault();col.classList.remove('drop-target');let data=dragData;
+   try{const parsed=JSON.parse(e.dataTransfer.getData('text/plain'));if(parsed)data=parsed;}catch{}
+   if(data?.source==='tray')addCubeToColumn(data.color,n);
+   else if(data?.source==='stack')moveStackCube(data.from,data.id,n);
+  });
+  stacks[n].forEach((item,index)=>{
+   const cube=makeCube(item.color,false);cube.dataset.column=n;cube.dataset.id=item.id;cube.title=`${item.color} cube ${index+1}; drag to move`;
+   col.appendChild(cube);
+  });
+  if(stacks[n].length===0){const note=document.createElement('span');note.className='empty-note';note.textContent='+';col.appendChild(note);}
+  board.appendChild(col);cols[n]=col;
+  const label=document.createElement('div');label.innerHTML=`${n}<div class="column-count">${stacks[n].length}/10</div>`;labels.appendChild(label);
+ }
+ const total=stacks.reduce((sum,s)=>sum+s.length,0);
+ document.getElementById('totalCount').textContent=`${total} of 55 cubes on the board`;
+}
+function updateSupplyCounts(){
+ for(const color of ['red','blue'])document.getElementById(color+'Count').textContent=inventory[color]+' available';
+}
+function updateStatus(title,detail){big.textContent=title;small.textContent=detail;}
+function addCubeToColumn(color,n){
+ if(inventory[color]<=0){updateStatus(`No ${color} cubes left!`,'Move a cube back to a tray or use the other color.');return;}
+ if(stacks[n].length>=10){updateStatus(`Stair ${n} is full.`,'Each stair can hold up to 10 cubes.');return;}
+ const id='cube-'+Math.random().toString(36).slice(2,11);
+ stacks[n].push({id,color});inventory[color]--;selectedColumn=n;selectedColor=color;
+ buildTrays();renderBoard();updateStatus(`Added a ${color} cube to stair ${n}.`,`${stacks[n].length} cube${stacks[n].length===1?'':'s'} in this stair. ${stacks[n].length===n?'This stair matches its number!':`It needs ${Math.abs(n-stacks[n].length)} ${stacks[n].length<n?'more':'fewer'} cube${Math.abs(n-stacks[n].length)===1?'':'s'} to match ${n}.`}`);
+}
+function addSelected(){if(inventory[selectedColor]<=0){updateStatus(`No ${selectedColor} cubes left!`,'Choose a cube of the other color or return a cube to the tray.');return;}addCubeToColumn(selectedColor,selectedColumn);}
+function moveCubeFromStack(el){
+ const n=Number(el.dataset.column),id=el.dataset.id;
+ const item=stacks[n].find(x=>x.id===id);if(!item)return;
+ selectedColumn=n;
+ updateStatus(`${item.color[0].toUpperCase()+item.color.slice(1)} cube selected.`,`Drag it to another stair to move it, or use “Remove top cube” to return the top cube to its tray.`);
+}
+function moveStackCube(from,id,to){
+ const index=stacks[from].findIndex(x=>x.id===id);if(index<0)return;
+ if(stacks[to].length>=10){updateStatus(`Stair ${to} is full.`,'Choose a stair with room for another cube.');return;}
+ // Keep stacks physically connected: a cube can be moved from the top only.
+ if(index!==stacks[from].length-1){updateStatus('Move the top cube first.','Linking cubes are stacked, so remove or move cubes from the top down.');return;}
+ const item=stacks[from].pop();stacks[to].push(item);selectedColumn=to;renderBoard();updateStatus(`Moved a ${item.color} cube to stair ${to}.`,`Stair ${from}: ${stacks[from].length} cubes. Stair ${to}: ${stacks[to].length} cubes.`);
+}
+function removeTop(){
+ const item=stacks[selectedColumn].pop();if(!item){updateStatus('This stair is empty.','Choose a stair with cubes to remove one.');return;}
+ inventory[item.color]++;buildTrays();renderBoard();updateStatus(`Removed a ${item.color} cube from stair ${selectedColumn}.`,`There are now ${stacks[selectedColumn].length} cubes in this stair.`);
+}
+function completeStair(){
+ const target=selectedColumn, current=stacks[target].length;
+ if(current===target){updateStatus(`🎉 Stair ${target} is correct!`,`It has exactly ${target} cubes.`);return;}
+ if(current>target){while(stacks[target].length>target){const item=stacks[target].pop();inventory[item.color]++;}}
+ else{
+  let needed=target-current;
+  while(needed>0){
+   let color=inventory.blue>0?'blue':inventory.red>0?'red':null;
+   if(!color)break;
+   const id='cube-'+Math.random().toString(36).slice(2,11);stacks[target].push({id,color});inventory[color]--;needed--;
+  }
+ }
+ buildTrays();renderBoard();
+ updateStatus(stacks[target].length===target?`🎉 Stair ${target} is correct!`:`Stair ${target} has ${stacks[target].length} cubes.`,`Each stair should have the same number of cubes as its label.`);
+}
+function clearSelected(){for(const item of stacks[selectedColumn])inventory[item.color]++;stacks[selectedColumn]=[];buildTrays();renderBoard();updateStatus(`Cleared stair ${selectedColumn}.`,'Its cubes are back in the red and blue trays.');}
+function setMode(m){
+ mode=m;document.querySelectorAll('.mode').forEach(b=>b.classList.remove('active'));
+ document.getElementById(m==='build'?'buildMode':m==='more'?'moreMode':'lessMode').classList.add('active');
+ instructions.textContent=m==='build'?'Drag red or blue cubes from the trays into a stair. You can also click a tray cube, then click a stair. Stack up to 10 cubes in each stair. Drag a top cube from one stair to another to move it.':m==='more'?'Choose a stair and add one cube to show “one more.” Compare the stair before and after adding the cube.':'Choose a stair and remove one cube to show “one less.” Compare the stair before and after removing the cube.';
+ updateStatus(m==='build'?'Build the stairs!':m==='more'?'Practice: 1 More':'Practice: 1 Less',m==='build'?'Use the 25 red cubes and 30 blue cubes from the lesson.':m==='more'?'Add a cube, then say: “___ . One more is ___.”':'Remove a cube, then say: “___ . One less is ___.”');
+}
+for(const n of Array.from({length:10},(_,i)=>i+1))stacks[n]=[];
+// Dragging a tray cube onto a stair, plus click-a-cube then click-a-stair.
+board.addEventListener('click',e=>{
+ const col=e.target.closest('.stair-column');if(!col||!selectedInventoryCube)return;
+ const color=selectedInventoryCube.dataset.color;addCubeToColumn(color,Number(col.dataset.n));selectedInventoryCube=null;
+});
+document.getElementById('addSelected').addEventListener('click',addSelected);
+document.getElementById('removeTop').addEventListener('click',removeTop);
+document.getElementById('completeStair').addEventListener('click',completeStair);
+document.getElementById('clearColumn').addEventListener('click',clearSelected);
+document.getElementById('buildMode').addEventListener('click',()=>setMode('build'));
+document.getElementById('moreMode').addEventListener('click',()=>setMode('more'));
+document.getElementById('lessMode').addEventListener('click',()=>setMode('less'));
+document.getElementById('reset').addEventListener('click',()=>{
+ for(let n=1;n<=10;n++)stacks[n]=[];inventory.red=25;inventory.blue=30;selectedColumn=1;selectedInventoryCube=null;buildTrays();renderBoard();setMode('build');updateStatus('Choose a cube and a stair!','The red and blue cube supplies match the lesson: 25 red and 30 blue.');
+});
+buildTrays();renderBoard();
+</script>
+</body>
+</html>
